@@ -6,6 +6,7 @@ import {
   Building2,
   Check,
   CircleDollarSign,
+  Database,
   FileText,
   LayoutDashboard,
   LogOut,
@@ -86,6 +87,7 @@ function initials(name: string) {
 export default function DashboardOverview() {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [properties, setProperties] = useState<PropertyRecord[]>([]);
+  const [temporaryStorage, setTemporaryStorage] = useState(false);
   const [activeSection, setActiveSection] = useState<Section>('overview');
   const [authMode, setAuthMode] = useState<AuthMode>('login');
   const [authLoading, setAuthLoading] = useState(true);
@@ -122,8 +124,10 @@ export default function DashboardOverview() {
 
         const profileResult = (await profileResponse.json()) as {
           user: UserProfile;
+          temporaryStorage?: boolean;
         };
         setUser(profileResult.user);
+        setTemporaryStorage(profileResult.temporaryStorage === true);
         setProfileForm({
           displayName: profileResult.user.displayName,
           email: profileResult.user.email,
@@ -142,8 +146,10 @@ export default function DashboardOverview() {
 
         const propertiesResult = (await propertiesResponse.json()) as {
           properties: PropertyRecord[];
+          temporaryStorage?: boolean;
         };
         setProperties(propertiesResult.properties);
+        setTemporaryStorage(propertiesResult.temporaryStorage === true);
       } catch {
         setAuthError(
           'Account service is unavailable. Check the database and retry.',
@@ -181,8 +187,12 @@ export default function DashboardOverview() {
         return;
       }
 
-      const result = (await response.json()) as { user: UserProfile };
+      const result = (await response.json()) as {
+        user: UserProfile;
+        temporaryStorage?: boolean;
+      };
       setUser(result.user);
+      setTemporaryStorage(result.temporaryStorage === true);
       setProfileForm({
         displayName: result.user.displayName,
         email: result.user.email,
@@ -193,8 +203,10 @@ export default function DashboardOverview() {
       if (propertiesResponse.ok) {
         const propertiesResult = (await propertiesResponse.json()) as {
           properties: PropertyRecord[];
+          temporaryStorage?: boolean;
         };
         setProperties(propertiesResult.properties);
+        setTemporaryStorage(propertiesResult.temporaryStorage === true);
       }
     } catch {
       setAuthError(
@@ -209,6 +221,7 @@ export default function DashboardOverview() {
     await fetch('/api/auth/logout', { method: 'POST' }).catch(() => undefined);
     setUser(null);
     setProperties([]);
+    setTemporaryStorage(false);
     setActiveSection('overview');
     setAuthMode('login');
     setAuthForm({ displayName: '', email: '', username: '', password: '' });
@@ -384,6 +397,16 @@ export default function DashboardOverview() {
               >
                 ×
               </button>
+            </div>
+          )}
+
+          {temporaryStorage && (
+            <div className="storage-notice" role="status">
+              <Database size={16} aria-hidden="true" />
+              <span>
+                <strong>Temporary local data.</strong> Your account and sample
+                properties reset when this development server stops.
+              </span>
             </div>
           )}
 

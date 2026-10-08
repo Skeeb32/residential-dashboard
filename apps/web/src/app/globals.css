@@ -950,6 +950,30 @@ a {
   line-height: 1;
 }
 
+.storage-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  margin-bottom: 14px;
+  border: 1px solid #e8dcc1;
+  border-radius: 6px;
+  background: #fbf7ed;
+  color: #76623e;
+  font-size: 11px;
+  line-height: 1.55;
+  padding: 10px 12px;
+}
+
+.storage-notice svg {
+  flex: none;
+  margin-top: 1px;
+  color: #a77b37;
+}
+
+.storage-notice strong {
+  color: #674d24;
+}
+
 .account-layout {
   display: grid;
   grid-template-columns: minmax(0, 1.5fr) minmax(240px, 0.8fr);

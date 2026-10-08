@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/db';
 import { UserModel } from '@/lib/models/user';
 import { getSessionUserId } from '@/lib/session';
+import {
+  findLocalDemoUserById,
+  updateLocalDemoUser,
+} from '@/lib/local-demo-store';
 
 export const runtime = 'nodejs';
 
@@ -15,10 +19,12 @@ export async function GET() {
   }
 
   try {
-    await connectToDatabase();
-    const user = await UserModel.findById(userId).select(
-      'displayName username email createdAt',
-    );
+    const database = await connectToDatabase();
+    const user = database
+      ? await UserModel.findById(userId).select(
+          'displayName username email createdAt',
+        )
+      : findLocalDemoUserById(userId);
     if (!user) {
       return NextResponse.json(
         { message: 'Account not found.' },
@@ -27,12 +33,16 @@ export async function GET() {
     }
 
     return NextResponse.json({
+      temporaryStorage: !database,
       user: {
-        id: user._id.toString(),
+        id: '_id' in user ? user._id.toString() : user.id,
         displayName: user.displayName,
         username: user.username,
         email: user.email,
-        createdAt: user.createdAt.toISOString(),
+        createdAt:
+          user.createdAt instanceof Date
+            ? user.createdAt.toISOString()
+            : user.createdAt,
       },
     });
   } catch {
@@ -73,12 +83,25 @@ export async function PUT(request: NextRequest) {
   }
 
   try {
-    await connectToDatabase();
-    const user = await UserModel.findByIdAndUpdate(
-      userId,
-      { $set: { displayName, email } },
-      { new: true, runValidators: true },
-    ).select('displayName username email createdAt');
+    const database = await connectToDatabase();
+    const localUpdate = database
+      ? null
+      : updateLocalDemoUser(userId, { displayName, email });
+
+    if (localUpdate?.emailInUse) {
+      return NextResponse.json(
+        { message: 'That email address is already in use.' },
+        { status: 409 },
+      );
+    }
+
+    const user = database
+      ? await UserModel.findByIdAndUpdate(
+          userId,
+          { $set: { displayName, email } },
+          { new: true, runValidators: true },
+        ).select('displayName username email createdAt')
+      : (localUpdate?.user ?? null);
 
     if (!user) {
       return NextResponse.json(
@@ -88,12 +111,16 @@ export async function PUT(request: NextRequest) {
     }
 
     return NextResponse.json({
+      temporaryStorage: !database,
       user: {
-        id: user._id.toString(),
+        id: '_id' in user ? user._id.toString() : user.id,
         displayName: user.displayName,
         username: user.username,
         email: user.email,
-        createdAt: user.createdAt.toISOString(),
+        createdAt:
+          user.createdAt instanceof Date
+            ? user.createdAt.toISOString()
+            : user.createdAt,
       },
     });
   } catch (error) {

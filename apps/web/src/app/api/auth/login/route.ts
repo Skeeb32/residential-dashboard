@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/db';
 import { UserModel } from '@/lib/models/user';
 import { createSessionToken, setSessionCookie } from '@/lib/session';
+import { findLocalDemoUserByUsername } from '@/lib/local-demo-store';
 
 export const runtime = 'nodejs';
 
@@ -22,8 +23,10 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    await connectToDatabase();
-    const user = await UserModel.findOne({ username }).select('+passwordHash');
+    const database = await connectToDatabase();
+    const user = database
+      ? await UserModel.findOne({ username }).select('+passwordHash')
+      : findLocalDemoUserByUsername(username);
     const passwordMatches = user
       ? await compare(password, user.passwordHash)
       : false;
@@ -35,10 +38,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const token = await createSessionToken(user._id.toString());
+    const userId = '_id' in user ? user._id.toString() : user.id;
+    const token = await createSessionToken(userId);
     const response = NextResponse.json({
+      temporaryStorage: !database,
       user: {
-        id: user._id.toString(),
+        id: userId,
         displayName: user.displayName,
         username: user.username,
         email: user.email,

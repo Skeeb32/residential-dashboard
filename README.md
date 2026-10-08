@@ -19,7 +19,7 @@ An account-based workspace for residential property records, portfolio metrics, 
 
 ---
 
-> **Project status:** early-stage working prototype. The Next.js application builds and includes Mongo-backed account routes. A MongoDB instance is required for real registration and sign-in. The NestJS tax service is present as source code, but is not yet connected to the web application's routes.
+> **Project status:** early-stage working prototype. The Next.js application builds and includes Mongo-backed account routes. When no Mongo URI is configured in development, it can use a temporary process-local store for registration and preview data; that data is lost when the dev server stops. The NestJS tax service is present as source code, but is not yet connected to the web application's routes.
 
 ## The idea
 
@@ -72,6 +72,7 @@ flowchart LR
 
 - **Web:** Next.js App Router, React, TypeScript, and Lucide icons.
 - **Data:** MongoDB through Mongoose. The web app defines its user model and account routes; the property schema is also represented in `apps/api`.
+- **Local preview:** a temporary process-local store can provide account and sample-property data if no Mongo URI is configured and the default local MongoDB is unavailable. It is never used in production.
 - **Authentication:** `bcryptjs` password hashing and `jose` signed sessions. Session cookies are HTTP-only, `SameSite=Strict`, and `Secure` in production.
 - **API source:** `apps/api` currently contains NestJS/Mongoose property and tax-engine source files, but no API package manifest or bootstrap application.
 
@@ -80,7 +81,7 @@ flowchart LR
 ### Requirements
 
 - Node.js and npm. The project was built locally with Node.js 22 and npm 10.
-- A MongoDB instance reachable by the web app.
+- MongoDB for persistent local data. Without it, development can use the temporary local store described below.
 - OpenSSL (recommended for generating a session secret).
 
 ### 1. Clone and install
@@ -108,11 +109,11 @@ MONGO_URI=mongodb://127.0.0.1:27017/mogul_db
 SESSION_SECRET=replace-with-the-generated-64-character-value
 ```
 
-`MONGODB_URI` is also accepted and takes precedence over `MONGO_URI`. The application defaults to `mongodb://127.0.0.1:27017/mogul_db` if neither is set. In production, `SESSION_SECRET` is required and must be at least 32 characters; do not use the development fallback or commit secrets.
+`MONGODB_URI` is also accepted and takes precedence over `MONGO_URI`. The application defaults to `mongodb://127.0.0.1:27017/mogul_db` if neither is set. In development only, if that default database is unreachable, the app falls back to process-local data. In production, `SESSION_SECRET` is required and must be at least 32 characters; the local fallback is disabled. Do not use the development secret fallback or commit secrets.
 
 ### Seed a local demo account
 
-With MongoDB running, the web app can create a local demo profile and two sample properties. The profile defaults to **Mogul Test** (`mogualtest@mogul.com`, username `MogulTest`); the property titles and addresses use title case. The username is normalized to lowercase for storage and login is case-insensitive.
+With persistent MongoDB running, the web app can create a local demo profile and two sample properties using the seed script. The profile defaults to **Mogul Test** (`mogualtest@mogul.com`, username `MogulTest`); the property titles and addresses use title case. The username is normalized to lowercase for storage and login is case-insensitive.
 
 Set `MOGUL_SEED_PASSWORD` in your shell (10–128 characters), then run this from `apps/web`:
 
@@ -122,9 +123,11 @@ npm run seed:demo
 
 The script hashes the password, associates both properties with the demo account, and can be rerun safely. It refuses to run when `NODE_ENV=production`. Never commit the password or put it in a tracked file.
 
+For a quick, non-persistent preview without a Mongo installation, start the app and register **Mogul Test** (`mogualtest@mogul.com`, `MogulTest`). Process-local development storage automatically adds the same two title-cased sample properties to that account. The dashboard displays a notice while temporary storage is active; account and property data are cleared when the development server stops. Use a configured Mongo URI when you need persistence.
+
 ### 3. Start the app
 
-Make sure MongoDB is running, then from `apps/web`:
+From `apps/web`:
 
 ```bash
 npm run dev

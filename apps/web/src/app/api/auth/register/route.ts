@@ -3,6 +3,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/db';
 import { UserModel } from '@/lib/models/user';
 import { createSessionToken, setSessionCookie } from '@/lib/session';
+import {
+  createLocalDemoUser,
+  seedLocalDemoProperties,
+} from '@/lib/local-demo-store';
 
 export const runtime = 'nodejs';
 
@@ -36,18 +40,45 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    await connectToDatabase();
-    const user = await UserModel.create({
-      displayName,
-      username,
-      email,
-      passwordHash: await hash(password, 12),
-    });
-    const token = await createSessionToken(user._id.toString());
+    const database = await connectToDatabase();
+    const passwordHash = await hash(password, 12);
+    const user = database
+      ? await UserModel.create({
+          displayName,
+          username,
+          email,
+          passwordHash,
+        })
+      : createLocalDemoUser({
+          displayName,
+          username,
+          email,
+          passwordHash,
+        });
+
+    if (!user) {
+      return NextResponse.json(
+        { message: 'That username or email is already registered.' },
+        { status: 409 },
+      );
+    }
+
+    const userId = '_id' in user ? user._id.toString() : user.id;
+    if (
+      !database &&
+      username === 'mogultest' &&
+      email === 'mogualtest@mogul.com' &&
+      displayName === 'Mogul Test'
+    ) {
+      seedLocalDemoProperties(userId);
+    }
+
+    const token = await createSessionToken(userId);
     const response = NextResponse.json(
       {
+        temporaryStorage: !database,
         user: {
-          id: user._id.toString(),
+          id: userId,
           displayName: user.displayName,
           username: user.username,
           email: user.email,

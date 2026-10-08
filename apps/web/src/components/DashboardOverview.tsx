@@ -42,7 +42,13 @@ export default function DashboardOverview() {
         </p>
       </header>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem' }}>
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+          gap: '1.5rem',
+        }}
+      >
         {mockProperties.map((prop, idx) => (
           <div
             key={idx}
@@ -54,36 +60,64 @@ export default function DashboardOverview() {
               boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
             }}
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h3 style={{ fontSize: '1.125rem', fontWeight: '600' }}>{prop.title}</h3>
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+              }}
+            >
+              <h3 style={{ fontSize: '1.125rem', fontWeight: '600' }}>
+                {prop.title}
+              </h3>
               <span
                 style={{
                   padding: '0.25rem 0.5rem',
                   borderRadius: '4px',
                   fontSize: '0.75rem',
                   fontWeight: 'bold',
-                  backgroundColor: prop.status === 'ACTIVE' ? '#d1fae5' : '#fef3c7',
+                  backgroundColor:
+                    prop.status === 'ACTIVE' ? '#d1fae5' : '#fef3c7',
                   color: prop.status === 'ACTIVE' ? '#065f46' : '#92400e',
                 }}
               >
                 {prop.status}
               </span>
             </div>
-            <p style={{ color: '#6b7280', fontSize: '0.875rem', margin: '0.5rem 0 1rem 0' }}>
+            <p
+              style={{
+                color: '#6b7280',
+                fontSize: '0.875rem',
+                margin: '0.5rem 0 1rem 0',
+              }}
+            >
               {prop.address}
             </p>
             <hr style={{ borderTop: '1px solid #f3f4f6', margin: '1rem 0' }} />
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', fontSize: '0.875rem' }}>
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: '1fr 1fr',
+                gap: '0.5rem',
+                fontSize: '0.875rem',
+              }}
+            >
               <div>
                 <p style={{ color: '#9ca3af' }}>Purchase Price</p>
-                <p style={{ fontWeight: '600' }}>${prop.purchasePrice.toLocaleString()}</p>
+                <p style={{ fontWeight: '600' }}>
+                  ${prop.purchasePrice.toLocaleString()}
+                </p>
               </div>
               <div>
                 <p style={{ color: '#9ca3af' }}>Target Yield</p>
-                <p style={{ fontWeight: '600', color: '#059669' }}>{prop.yieldPct}%</p>
+                <p style={{ fontWeight: '600', color: '#059669' }}>
+                  {prop.yieldPct}%
+                </p>
               </div>
               <div style={{ gridColumn: 'span 2', marginTop: '0.5rem' }}>
-                <p style={{ color: '#9ca3af' }}>Est. Annual Depreciation (Tax Engine)</p>
+                <p style={{ color: '#9ca3af' }}>
+                  Est. Annual Depreciation (Tax Engine)
+                </p>
                 <p style={{ fontWeight: '600', color: '#2563eb' }}>
                   ${prop.annualDepreciation.toLocaleString()}/yr
                 </p>

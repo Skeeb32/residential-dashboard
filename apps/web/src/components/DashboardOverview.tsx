@@ -12,6 +12,7 @@ import {
   LogOut,
   MapPin,
   ShieldCheck,
+  Trash2,
   UserRound,
   UsersRound,
   type LucideIcon,
@@ -219,6 +220,10 @@ export default function DashboardOverview() {
 
   async function logout() {
     await fetch('/api/auth/logout', { method: 'POST' }).catch(() => undefined);
+    clearClientSession();
+  }
+
+  function clearClientSession() {
     setUser(null);
     setProperties([]);
     setTemporaryStorage(false);
@@ -439,6 +444,7 @@ export default function DashboardOverview() {
               onFormChange={setProfileForm}
               onSubmit={saveProfile}
               onLogout={logout}
+              onAccountDeleted={clearClientSession}
             />
           )}
         </main>
@@ -1005,6 +1011,7 @@ function AccountSection({
   onFormChange,
   onSubmit,
   onLogout,
+  onAccountDeleted,
 }: {
   user: UserProfile;
   form: { displayName: string; email: string };
@@ -1013,7 +1020,36 @@ function AccountSection({
   onFormChange: (form: { displayName: string; email: string }) => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
   onLogout: () => void;
+  onAccountDeleted: () => void;
 }) {
+  const [confirmingDeletion, setConfirmingDeletion] = useState(false);
+  const [deleteConfirmation, setDeleteConfirmation] = useState('');
+  const [deleteMessage, setDeleteMessage] = useState('');
+  const [deleting, setDeleting] = useState(false);
+
+  async function deleteAccount(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (deleteConfirmation.trim().toLowerCase() !== user.username) return;
+
+    setDeleting(true);
+    setDeleteMessage('');
+    try {
+      const response = await fetch('/api/profile', { method: 'DELETE' });
+      if (!response.ok) {
+        setDeleteMessage(
+          await responseMessage(response, 'Your account could not be deleted.'),
+        );
+        return;
+      }
+
+      onAccountDeleted();
+    } catch {
+      setDeleteMessage('Your account could not be deleted. Please retry.');
+    } finally {
+      setDeleting(false);
+    }
+  }
+
   return (
     <div className="account-layout">
       <section className="content-panel profile-panel">
@@ -1107,6 +1143,69 @@ function AccountSection({
           <button className="secondary-button" type="button" onClick={onLogout}>
             <LogOut size={16} /> Sign out
           </button>
+        </section>
+        <section className="content-panel danger-zone">
+          <p className="eyebrow">DANGER ZONE</p>
+          <h3>Delete your account</h3>
+          <p>
+            Permanently remove your profile and property records associated with
+            this account.
+          </p>
+          {!confirmingDeletion ? (
+            <button
+              className="danger-button"
+              type="button"
+              onClick={() => {
+                setDeleteMessage('');
+                setConfirmingDeletion(true);
+              }}
+            >
+              <Trash2 size={15} aria-hidden="true" />
+              Delete account
+            </button>
+          ) : (
+            <form className="delete-confirm-form" onSubmit={deleteAccount}>
+              <label htmlFor="deleteAccountUsername">
+                Type <strong>{user.username}</strong> to confirm
+              </label>
+              <input
+                id="deleteAccountUsername"
+                autoComplete="off"
+                value={deleteConfirmation}
+                onChange={(event) => setDeleteConfirmation(event.target.value)}
+                required
+              />
+              {deleteMessage && (
+                <p className="delete-error" role="alert">
+                  {deleteMessage}
+                </p>
+              )}
+              <div className="delete-actions">
+                <button
+                  className="secondary-button"
+                  type="button"
+                  disabled={deleting}
+                  onClick={() => {
+                    setConfirmingDeletion(false);
+                    setDeleteConfirmation('');
+                    setDeleteMessage('');
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="danger-button"
+                  type="submit"
+                  disabled={
+                    deleting ||
+                    deleteConfirmation.trim().toLowerCase() !== user.username
+                  }
+                >
+                  {deleting ? 'Deleting…' : 'Permanently delete'}
+                </button>
+              </div>
+            </form>
+          )}
         </section>
       </aside>
     </div>

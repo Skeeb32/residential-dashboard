@@ -1123,6 +1123,99 @@ a {
   margin-bottom: 4px;
 }
 
+.danger-zone {
+  padding: 20px;
+  border-color: #eadbd7;
+  background: #fffdfc;
+}
+
+.danger-zone h3 {
+  margin: 0 0 6px;
+  color: #823f38;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.danger-zone > p:not(.eyebrow) {
+  margin: 0 0 15px;
+  color: #7d7774;
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+.danger-button {
+  display: inline-flex;
+  min-height: 36px;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border: 1px solid #a74940;
+  border-radius: 5px;
+  background: #fff;
+  color: #9a4038;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 650;
+  padding: 0 11px;
+  transition:
+    background 150ms ease,
+    color 150ms ease;
+}
+
+.danger-button:hover:not(:disabled) {
+  background: #a74940;
+  color: #fff;
+}
+
+.danger-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.delete-confirm-form {
+  display: grid;
+  gap: 10px;
+  margin-top: 15px;
+  border-top: 1px solid #f0e4e1;
+  padding-top: 14px;
+}
+
+.delete-confirm-form label {
+  color: #655c59;
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.delete-confirm-form input {
+  width: 100%;
+  min-width: 0;
+  height: 38px;
+  border: 1px solid #e4d5d1;
+  border-radius: 5px;
+  background: #fff;
+  padding: 0 10px;
+}
+
+.delete-confirm-form input:focus {
+  border-color: #b36c64;
+  outline: 0;
+  box-shadow: 0 0 0 3px rgb(154 64 56 / 10%);
+}
+
+.delete-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.delete-error {
+  margin: 0;
+  color: var(--danger);
+  font-size: 10px;
+  line-height: 1.5;
+}
+
 .mobile-nav {
   display: none;
 }

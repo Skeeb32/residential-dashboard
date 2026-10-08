@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { Types } from 'mongoose';
 import { connectToDatabase } from '@/lib/db';
 import { UserModel } from '@/lib/models/user';
-import { getSessionUserId } from '@/lib/session';
+import { clearSessionCookie, getSessionUserId } from '@/lib/session';
 import {
+  deleteLocalDemoUser,
   findLocalDemoUserById,
   updateLocalDemoUser,
 } from '@/lib/local-demo-store';
@@ -138,6 +140,55 @@ export async function PUT(request: NextRequest) {
 
     return NextResponse.json(
       { message: 'Your profile could not be saved. Please retry.' },
+      { status: 503 },
+    );
+  }
+}
+
+export async function DELETE() {
+  const userId = await getSessionUserId();
+  if (!userId) {
+    return NextResponse.json(
+      { message: 'Sign in to continue.' },
+      { status: 401 },
+    );
+  }
+
+  try {
+    const database = await connectToDatabase();
+    if (database) {
+      if (!Types.ObjectId.isValid(userId)) {
+        return NextResponse.json(
+          { message: 'Account not found.' },
+          { status: 404 },
+        );
+      }
+
+      const account = await UserModel.findById(userId).select('_id');
+      if (!account) {
+        return NextResponse.json(
+          { message: 'Account not found.' },
+          { status: 404 },
+        );
+      }
+
+      await database.connection
+        .collection('properties')
+        .deleteMany({ ownerId: new Types.ObjectId(userId) });
+      await UserModel.deleteOne({ _id: userId });
+    } else if (!deleteLocalDemoUser(userId)) {
+      return NextResponse.json(
+        { message: 'Account not found.' },
+        { status: 404 },
+      );
+    }
+
+    const response = NextResponse.json({ deleted: true });
+    clearSessionCookie(response);
+    return response;
+  } catch {
+    return NextResponse.json(
+      { message: 'Your account could not be deleted. Please retry.' },
       { status: 503 },
     );
   }

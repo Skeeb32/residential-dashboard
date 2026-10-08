@@ -107,6 +107,12 @@ export function updateLocalDemoUser(
   return { user, emailInUse: false };
 }
 
+export function deleteLocalDemoUser(userId: string) {
+  const userRemoved = store.users.delete(userId);
+  store.properties.delete(userId);
+  return userRemoved;
+}
+
 export function seedLocalDemoProperties(userId: string) {
   if (store.properties.has(userId)) return;
 

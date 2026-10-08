@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
+import { Document, Types } from 'mongoose';
 
 export type PropertyDocument = Property & Document;
 
@@ -12,6 +12,9 @@ export enum PropertyStatus {
 
 @Schema({ timestamps: true })
 export class Property {
+  @Prop({ type: Types.ObjectId, ref: 'User', index: true })
+  ownerId?: Types.ObjectId;
+
   @Prop({ required: true })
   title: string;
 

@@ -110,6 +110,18 @@ SESSION_SECRET=replace-with-the-generated-64-character-value
 
 `MONGODB_URI` is also accepted and takes precedence over `MONGO_URI`. The application defaults to `mongodb://127.0.0.1:27017/mogul_db` if neither is set. In production, `SESSION_SECRET` is required and must be at least 32 characters; do not use the development fallback or commit secrets.
 
+### Seed a local demo account
+
+With MongoDB running, the web app can create a local demo profile and two sample properties. The profile defaults to **Mogul Test** (`mogualtest@mogul.com`, username `MogulTest`); the property titles and addresses use title case. The username is normalized to lowercase for storage and login is case-insensitive.
+
+Set `MOGUL_SEED_PASSWORD` in your shell (10–128 characters), then run this from `apps/web`:
+
+```bash
+npm run seed:demo
+```
+
+The script hashes the password, associates both properties with the demo account, and can be rerun safely. It refuses to run when `NODE_ENV=production`. Never commit the password or put it in a tracked file.
+
 ### 3. Start the app
 
 Make sure MongoDB is running, then from `apps/web`:

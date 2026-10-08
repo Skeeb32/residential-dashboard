@@ -525,7 +525,7 @@ function AuthScreen({
               <>
                 <FormField
                   id="displayName"
-                  label="Full name"
+                  label="Full Name"
                   value={form.displayName}
                   onChange={(value) =>
                     onFormChange({ ...form, displayName: value })
@@ -536,7 +536,7 @@ function AuthScreen({
                 />
                 <FormField
                   id="registerEmail"
-                  label="Email address"
+                  label="Email Address"
                   type="email"
                   value={form.email}
                   onChange={(value) => onFormChange({ ...form, email: value })}
@@ -1014,7 +1014,7 @@ function AccountSection({
           <div className="profile-form-grid">
             <FormField
               id="profileDisplayName"
-              label="Full name"
+              label="Full Name"
               value={form.displayName}
               onChange={(value) =>
                 onFormChange({ ...form, displayName: value })
@@ -1026,7 +1026,7 @@ function AccountSection({
             />
             <FormField
               id="profileEmail"
-              label="Email address"
+              label="Email Address"
               type="email"
               value={form.email}
               onChange={(value) => onFormChange({ ...form, email: value })}

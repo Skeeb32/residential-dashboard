@@ -553,7 +553,7 @@ function AuthScreen({
               autoComplete="username"
               minLength={3}
               maxLength={32}
-              pattern="[A-Za-z0-9._-]+"
+              pattern="(?:[A-Za-z0-9._]|-)+"
               hint={
                 registering
                   ? '3–32 characters: letters, numbers, dots, dashes, or underscores.'

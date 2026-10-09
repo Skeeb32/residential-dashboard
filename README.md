@@ -25,7 +25,7 @@ An account-based workspace for residential property records, portfolio metrics, 
 
 Property information, account identity, and tax details belong in one place, with personal records scoped to the person signed in. Mogul pairs a focused portfolio dashboard with a small server-side account layer and an existing Mongoose property model.
 
-The current interface is organized around four daily-use areas: **Overview**, **Portfolio**, **Tax center**, and **Account**. It is designed for a responsive workspace, not a marketing landing page.
+The current interface is organized around five areas: **Overview**, **Discover**, **Portfolio**, **Tax center**, and **Account**. It is designed for a responsive workspace, not a marketing landing page.
 
 ## What is here
 
@@ -35,6 +35,8 @@ The current interface is organized around four daily-use areas: **Overview**, **
 | Session                | Passwords are hashed with `bcryptjs`; a signed JWT is stored in an HTTP-only, same-site cookie.                                                             |
 | Profile                | View and update display name and email. Username is immutable in the current UI.                                                                            |
 | Personal dashboard     | Summarizes portfolio value, average target yield, annual depreciation metadata, and investor count for the signed-in account.                               |
+| Home discovery         | Search RentCast sale or long-term rental listings by ZIP or city/state, with property filters and market statistics.                                        |
+| Earnings comparison    | Compare up to three sale listings using address-level rent estimates, ranges, annual gross rent, and gross yield.                                           |
 | Portfolio              | Lists properties whose `ownerId` matches the signed-in user's MongoDB ObjectId.                                                                             |
 | Tax center             | Displays property-level depreciation schedule, annual depreciation, and K-1 count when those fields exist.                                                  |
 | Property model         | Retains the existing property fields and tax metadata; `ownerId` is an optional additive reference.                                                         |
@@ -48,6 +50,7 @@ flowchart LR
   Next --> Auth[Auth route handlers]
   Next --> Profile[Profile route handlers]
   Next --> Properties[Account-scoped property route]
+  Next --> Market[Authenticated RentCast proxy routes]
   Auth --> Session[Signed HTTP-only session cookie]
   Profile --> Session
   Properties --> Session
@@ -55,6 +58,8 @@ flowchart LR
   Profile --> Users
   Properties --> PropertyDocs[(MongoDB properties)]
   Properties -->|ownerId equals session user ID| PropertyDocs
+  Market --> RentCast[Sale and rental listings]
+  Market --> Metrics[ZIP market stats and rent AVMs]
   TaxSource[NestJS tax service source] -.->|not wired to web routes yet| PropertyDocs
 ```
 
@@ -72,6 +77,7 @@ flowchart LR
 
 - **Web:** Next.js App Router, React, TypeScript, and Lucide icons.
 - **Data:** MongoDB through Mongoose. The web app defines its user model and account routes; the property schema is also represented in `apps/api`.
+- **Housing data:** RentCast listings, ZIP-level market statistics, and rent estimates are accessed through server-side routes. The provider key never reaches the browser.
 - **Local preview:** a temporary process-local store can provide account and sample-property data if no Mongo URI is configured and the default local MongoDB is unavailable. It is never used in production.
 - **Authentication:** `bcryptjs` password hashing and `jose` signed sessions. Session cookies are HTTP-only, `SameSite=Strict`, and `Secure` in production.
 - **API source:** `apps/api` currently contains NestJS/Mongoose property and tax-engine source files, but no API package manifest or bootstrap application.
@@ -94,7 +100,7 @@ npm ci
 
 ### 2. Configure the web app
 
-Create `apps/web/.env.local` and set the Mongo connection string and a random secret. `.env.local` is ignored by Git.
+Create `apps/web/.env.local` and set the Mongo connection string, a random session secret, and (for live listings) a RentCast API key. `.env.local` is ignored by Git.
 
 Generate a secret with:
 
@@ -107,9 +113,12 @@ Then put the connection string and generated value in `.env.local`:
 ```dotenv
 MONGO_URI=mongodb://127.0.0.1:27017/mogul_db
 SESSION_SECRET=replace-with-the-generated-64-character-value
+RENTCAST_API_KEY=your-rentcast-key
 ```
 
 `MONGODB_URI` is also accepted and takes precedence over `MONGO_URI`. The application defaults to `mongodb://127.0.0.1:27017/mogul_db` if neither is set. In development only, if that default database is unreachable, the app falls back to process-local data. In production, `SESSION_SECRET` is required and must be at least 32 characters; the local fallback is disabled. Do not use the development secret fallback or commit secrets.
+
+Create a RentCast account and API key from its [developer dashboard](https://app.rentcast.io/app/api). Without `RENTCAST_API_KEY`, Discover uses clearly labeled sample listings and metrics. RentCast's documented Developer plan includes 50 requests per month; requests beyond a plan's limit may incur overage charges, and the provider enforces 20 requests per second. Listing searches, ZIP market snapshots, and each selected property's rent estimate are separate provider requests. Results are cached server-side for 15 minutes, one hour, and six hours respectively.
 
 ### Seed a local demo account
 
@@ -144,8 +153,11 @@ npm start
 
 1. Register with a display name, email, username, and password of at least 10 characters.
 2. Sign in with your username and password. Your session lasts seven days unless you sign out.
-3. Use Overview for account-level summaries, Portfolio for assigned property records, and Tax center for the tax metadata stored on those records.
-4. Edit your display name or email in Account. Sign out from the top bar or account panel.
+3. Use Discover to search sale/rental listings by ZIP or city/state, inspect local market metrics, and compare rent estimates for up to three sale listings.
+4. Use Overview for account summaries, Portfolio for assigned property records, and Tax center for stored tax metadata.
+5. Edit profile details, sign out, or delete your account in Account settings.
+
+Discover cards use **representative photography**, not listing-specific photos; the selected provider's published listings schema does not include photos. Earnings comparisons show estimated annual gross rent and gross yield before expenses, financing, vacancy, or taxes. They are not net cash-flow projections or investment/tax advice.
 
 ### Associate an existing property
 

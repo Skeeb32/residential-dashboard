@@ -6,6 +6,7 @@ import {
   Building2,
   Check,
   CircleDollarSign,
+  Compass,
   Database,
   FileText,
   LayoutDashboard,
@@ -18,6 +19,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { useEffect, useState, type FormEvent } from 'react';
+import MarketExplorer from './MarketExplorer';
 
 type UserProfile = {
   id: string;
@@ -42,11 +44,12 @@ type PropertyRecord = {
   };
 };
 
-type Section = 'overview' | 'portfolio' | 'tax' | 'account';
+type Section = 'overview' | 'discover' | 'portfolio' | 'tax' | 'account';
 type AuthMode = 'login' | 'register';
 
 const navigation: { id: Section; label: string; icon: LucideIcon }[] = [
   { id: 'overview', label: 'Overview', icon: LayoutDashboard },
+  { id: 'discover', label: 'Discover', icon: Compass },
   { id: 'portfolio', label: 'Portfolio', icon: Building2 },
   { id: 'tax', label: 'Tax center', icon: FileText },
   { id: 'account', label: 'Account', icon: UserRound },
@@ -54,6 +57,10 @@ const navigation: { id: Section; label: string; icon: LucideIcon }[] = [
 
 const sectionDetails: Record<Section, { title: string; eyebrow: string }> = {
   overview: { title: 'Overview', eyebrow: 'Your portfolio at a glance' },
+  discover: {
+    title: 'Discover',
+    eyebrow: 'Explore homes and market potential',
+  },
   portfolio: {
     title: 'Portfolio',
     eyebrow: 'Properties connected to your account',
@@ -426,6 +433,7 @@ export default function DashboardOverview() {
               onViewPortfolio={() => setActiveSection('portfolio')}
             />
           )}
+          {activeSection === 'discover' && <MarketExplorer />}
           {activeSection === 'portfolio' && (
             <PortfolioSection properties={properties} />
           )}

@@ -19,6 +19,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { useEffect, useState, type FormEvent } from 'react';
+import { signIn, signOut } from 'next-auth/react';
 import MarketExplorer from './MarketExplorer';
 
 type UserProfile = {
@@ -175,27 +176,47 @@ export default function DashboardOverview() {
     setSubmitting(true);
     setAuthError('');
 
-    const endpoint =
-      authMode === 'login' ? '/api/auth/login' : '/api/auth/register';
-    const payload =
-      authMode === 'login'
-        ? { username: authForm.username, password: authForm.password }
-        : authForm;
-
     try {
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+      if (authMode === 'register') {
+        const registration = await fetch('/api/auth/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(authForm),
+        });
+        if (!registration.ok) {
+          setAuthError(
+            await responseMessage(
+              registration,
+              'Unable to create account. Please retry.',
+            ),
+          );
+          return;
+        }
+      }
+
+      const authResult = await signIn('credentials', {
+        username: authForm.username,
+        password: authForm.password,
+        redirect: false,
       });
-      if (!response.ok) {
-        setAuthError(
-          await responseMessage(response, 'Unable to sign in. Please retry.'),
-        );
+      if (!authResult || authResult.error) {
+        setAuthError('The username or password is incorrect.');
         return;
       }
 
-      const result = (await response.json()) as {
+      const profileResponse = await fetch('/api/profile');
+      if (!profileResponse.ok) {
+        setAuthError(
+          await responseMessage(
+            profileResponse,
+            'Your account could not be loaded. Please retry.',
+          ),
+        );
+        await signOut({ redirect: false });
+        return;
+      }
+
+      const result = (await profileResponse.json()) as {
         user: UserProfile;
         temporaryStorage?: boolean;
       };
@@ -226,11 +247,12 @@ export default function DashboardOverview() {
   }
 
   async function logout() {
-    await fetch('/api/auth/logout', { method: 'POST' }).catch(() => undefined);
+    await signOut({ redirect: false });
     clearClientSession();
   }
 
   function clearClientSession() {
+    void signOut({ redirect: false });
     setUser(null);
     setProperties([]);
     setTemporaryStorage(false);

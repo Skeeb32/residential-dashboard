@@ -2,12 +2,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import { Types } from 'mongoose';
 import { connectToDatabase } from '@/lib/db';
 import { UserModel } from '@/lib/models/user';
-import { clearSessionCookie, getSessionUserId } from '@/lib/session';
+import { getSessionUserId } from '@/lib/session';
 import {
   deleteLocalDemoUser,
   findLocalDemoUserById,
   updateLocalDemoUser,
 } from '@/lib/local-demo-store';
+import { deleteUserAssistantData } from '@/lib/assistant/store';
 
 export const runtime = 'nodejs';
 
@@ -156,6 +157,7 @@ export async function DELETE() {
 
   try {
     const database = await connectToDatabase();
+    await deleteUserAssistantData(userId);
     if (database) {
       if (!Types.ObjectId.isValid(userId)) {
         return NextResponse.json(
@@ -183,9 +185,7 @@ export async function DELETE() {
       );
     }
 
-    const response = NextResponse.json({ deleted: true });
-    clearSessionCookie(response);
-    return response;
+    return NextResponse.json({ deleted: true });
   } catch {
     return NextResponse.json(
       { message: 'Your account could not be deleted. Please retry.' },

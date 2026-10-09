@@ -2,7 +2,6 @@ import { hash } from 'bcryptjs';
 import { NextRequest, NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/db';
 import { UserModel } from '@/lib/models/user';
-import { createSessionToken, setSessionCookie } from '@/lib/session';
 import {
   createLocalDemoUser,
   seedLocalDemoProperties,
@@ -73,8 +72,7 @@ export async function POST(request: NextRequest) {
       seedLocalDemoProperties(userId);
     }
 
-    const token = await createSessionToken(userId);
-    const response = NextResponse.json(
+    return NextResponse.json(
       {
         temporaryStorage: !database,
         user: {
@@ -86,8 +84,6 @@ export async function POST(request: NextRequest) {
       },
       { status: 201 },
     );
-    setSessionCookie(response, token);
-    return response;
   } catch (error) {
     if (
       typeof error === 'object' &&

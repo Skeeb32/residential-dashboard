@@ -1,6 +1,6 @@
 <div align="center">
 
-# Mogul
+# Real Estate Dashboard
 
 ### A clearer view of private real estate.
 
